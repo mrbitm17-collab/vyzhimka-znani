@@ -49,7 +49,7 @@ export default function RootLayout({
                     VZ
                   </span>
                   <span className="ml-1 text-[18px] font-medium tracking-tight">
-                    Vyzhinka.Znani
+                    Vyzhimka Znaniy
                   </span>
                 </Link>
               </div>
