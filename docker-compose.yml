@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: ez_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ez
+      POSTGRES_PASSWORD: ez_password
+      POSTGRES_DB: ez
+    ports:
+      - "5432:5432"
+    volumes:
+      - ez_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  ez_postgres_data:
+

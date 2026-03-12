@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Channel {
+  id              String      @id @default(cuid())
+  youtubeChannelId String     @unique
+  title           String
+  handle          String?
+  description     String?
+  language        String?
+  country         String?
+  thumbnailUrl    String?
+  importedAt      DateTime    @default(now())
+  lastSyncAt      DateTime?
+
+  videos          Video[]
+  tags            ChannelTag[]
+
+  @@index([title])
+}
+
+model Video {
+  id            String    @id @default(cuid())
+  youtubeVideoId String   @unique
+  channelId     String
+  title         String
+  description   String?
+  publishedAt   DateTime?
+  durationSec   Int?
+  views         Int?
+  thumbnailUrl  String?
+  language      String?
+
+  importedAt    DateTime  @default(now())
+  lastSyncAt    DateTime?
+
+  channel       Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  transcript    Transcript?
+  segments      Segment[]
+  workbook      Workbook?
+  tags          VideoTag[]
+
+  @@index([channelId, publishedAt])
+  @@index([title])
+}
+
+model Transcript {
+  id          String   @id @default(cuid())
+  videoId     String   @unique
+  source      String   // youtube_captions | asr | manual
+  rawText     String
+  cleanedText String?
+  language    String?
+  createdAt   DateTime @default(now())
+
+  video       Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model Segment {
+  id        String   @id @default(cuid())
+  videoId   String
+  startSec  Int?
+  endSec    Int?
+  text      String
+  createdAt DateTime @default(now())
+
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  tags      SegmentTag[]
+
+  @@index([videoId])
+}
+
+model Workbook {
+  id          String   @id @default(cuid())
+  videoId     String   @unique
+  title       String
+  speaker     String?
+  summary     String?
+  markdown    String?
+  json        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  video       Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  tags        WorkbookTag[]
+
+  @@index([title])
+}
+
+model LibraryItem {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  summary     String?
+  markdown    String?
+  json        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tags        LibraryTag[]
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+
+  channels  ChannelTag[]
+  videos    VideoTag[]
+  segments  SegmentTag[]
+  workbooks WorkbookTag[]
+  library   LibraryTag[]
+}
+
+model AuthToken {
+  id           String   @id @default(cuid())
+  provider     String   @unique // "google"
+  accessToken  String?
+  refreshToken String?
+  scope        String?
+  tokenType    String?
+  expiryDate   DateTime?
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+}
+
+model ChannelTag {
+  channelId String
+  tagId     String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, tagId])
+  @@index([tagId])
+}
+
+model VideoTag {
+  videoId String
+  tagId   String
+  video   Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([videoId, tagId])
+  @@index([tagId])
+}
+
+model SegmentTag {
+  segmentId String
+  tagId     String
+  segment   Segment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([segmentId, tagId])
+  @@index([tagId])
+}
+
+model WorkbookTag {
+  workbookId String
+  tagId      String
+  workbook   Workbook @relation(fields: [workbookId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([workbookId, tagId])
+  @@index([tagId])
+}
+
+model LibraryTag {
+  libraryItemId String
+  tagId         String
+  libraryItem   LibraryItem @relation(fields: [libraryItemId], references: [id], onDelete: Cascade)
+  tag           Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([libraryItemId, tagId])
+  @@index([tagId])
+}
+
