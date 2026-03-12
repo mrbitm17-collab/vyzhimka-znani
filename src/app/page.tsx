@@ -1,54 +1,145 @@
-export default function Home() {
+import Link from "next/link";
+import { prisma } from "@/server/db";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+function formatDuration(sec: number | null) {
+  if (!sec) return "";
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function formatViews(v: number | null) {
+  if (!v) return "";
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
+  return String(v);
+}
+
+export default async function Home() {
+  const [channelCount, videoCount, recentVideos, channels] = await Promise.all([
+    prisma.channel.count(),
+    prisma.video.count(),
+    prisma.video.findMany({
+      take: 8,
+      orderBy: { publishedAt: "desc" },
+      include: { channel: true },
+    }),
+    prisma.channel.findMany({
+      take: 6,
+      orderBy: { importedAt: "desc" },
+      include: { _count: { select: { videos: true } } },
+    }),
+  ]);
+
   return (
-    <div className="space-y-6">
-      <section className="rounded-xl bg-[#181818] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
-        <p className="text-xs font-medium text-[#aaaaaa]">
-          Локальная база знаний из YouTube
-        </p>
-        <h1 className="mt-2 text-2xl font-medium tracking-tight md:text-3xl">
-          Выжимки и дистилляты — структурированные знания для людей и AI‑агентов
+    <div className="space-y-8">
+      <section className="rounded-xl bg-[#181818] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
+        <h1 className="text-2xl font-medium tracking-tight md:text-3xl">
+          Выжимка знаний
         </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#d4d4d4]">
-          Здесь будут храниться каналы, видео, транскрипты, сегменты, выжимки из
-          отдельных видео и дистилляты тем. Начните с раздела «Библиотека» или
-          добавьте канал в админке.
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#aaaaaa]">
+          Структурированные знания из YouTube: каналы, видео, выжимки и дистилляты.
         </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <a
-            href="/library"
-            className="inline-flex h-9 items-center justify-center rounded-full bg-[#f1f1f1] px-5 text-sm font-medium text-black shadow-[0_1px_2px_rgba(0,0,0,0.5)] hover:bg-white"
-          >
-            Открыть библиотеку
-          </a>
-          <a
-            href="/admin"
-            className="inline-flex h-9 items-center justify-center rounded-full border border-[#3f3f3f] bg-[#272727] px-5 text-sm font-medium text-[#f1f1f1] shadow-[0_1px_2px_rgba(0,0,0,0.7)] hover:bg-[#3d3d3d]"
-          >
-            Админка / импорт
-          </a>
+        <div className="mt-4 flex gap-6 text-sm">
+          <div>
+            <span className="text-xl font-semibold">{channelCount}</span>{" "}
+            <span className="text-[#aaaaaa]">каналов</span>
+          </div>
+          <div>
+            <span className="text-xl font-semibold">{videoCount}</span>{" "}
+            <span className="text-[#aaaaaa]">видео</span>
+          </div>
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-xl bg-[#181818] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
-          <h2 className="text-base font-semibold">Библиотека</h2>
-          <p className="mt-2 text-xs leading-5 text-[#d4d4d4]">
-            Дистилляты — синтез нескольких видео по одной теме.
-          </p>
-        </div>
-        <div className="rounded-xl bg-[#181818] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
-          <h2 className="text-base font-semibold">Выжимки</h2>
-          <p className="mt-2 text-xs leading-5 text-[#d4d4d4]">
-            Выжимка одного видео: тезисы, задания, цитаты, транскрипт.
-          </p>
-        </div>
-        <div className="rounded-xl bg-[#181818] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
-          <h2 className="text-base font-semibold">API</h2>
-          <p className="mt-2 text-xs leading-5 text-[#d4d4d4]">
-            Публичные JSON и Markdown эндпоинты для агентов и интеграций.
-          </p>
-        </div>
-      </section>
+      {recentVideos.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Недавние видео</h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {recentVideos.map((v) => (
+              <Link
+                key={v.id}
+                href={`/video/${v.youtubeVideoId}`}
+                className="group rounded-xl bg-[#181818] overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.7)] hover:bg-[#222]"
+              >
+                {v.thumbnailUrl && (
+                  <div className="relative">
+                    <img
+                      src={v.thumbnailUrl}
+                      alt={v.title}
+                      className="aspect-video w-full object-cover"
+                    />
+                    {v.durationSec && (
+                      <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.5 text-[11px] font-medium">
+                        {formatDuration(v.durationSec)}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <div className="p-3">
+                  <h3 className="line-clamp-2 text-sm font-medium leading-snug">
+                    {v.title}
+                  </h3>
+                  <p className="mt-1 text-xs text-[#aaaaaa]">
+                    {v.channel.title}
+                  </p>
+                  <p className="text-xs text-[#aaaaaa]">
+                    {v.views ? `${formatViews(v.views)} просм.` : ""}
+                    {v.publishedAt && (
+                      <>
+                        {v.views ? " · " : ""}
+                        {new Date(v.publishedAt).toLocaleDateString("ru-RU")}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {channels.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Каналы</h2>
+            <Link href="/channels" className="text-sm text-[#3ea6ff] hover:underline">
+              Все {channelCount} →
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {channels.map((ch) => (
+              <Link
+                key={ch.id}
+                href={`/channels`}
+                className="flex items-center gap-3 rounded-xl bg-[#181818] p-4 shadow-[0_1px_2px_rgba(0,0,0,0.7)] hover:bg-[#222]"
+              >
+                {ch.thumbnailUrl && (
+                  <img
+                    src={ch.thumbnailUrl}
+                    alt={ch.title}
+                    className="h-12 w-12 shrink-0 rounded-full object-cover"
+                  />
+                )}
+                <div className="min-w-0">
+                  <h3 className="truncate text-sm font-medium">{ch.title}</h3>
+                  <p className="text-xs text-[#aaaaaa]">
+                    {ch._count.videos} видео
+                    {ch.handle && ` · ${ch.handle}`}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
