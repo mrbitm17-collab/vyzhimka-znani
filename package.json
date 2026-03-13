@@ -11,16 +11,21 @@
     "sync:youtube": "tsx scripts/sync-youtube.ts",
     "import:transcript": "tsx scripts/import-transcript.ts",
     "pipeline:video": "tsx scripts/pipeline-video.ts",
-    "pipeline:library": "tsx scripts/pipeline-library.ts"
+    "pipeline:library": "tsx scripts/pipeline-library.ts",
+    "pipeline:local": "tsx scripts/pipeline-local.ts",
+    "sync:full": "tsx scripts/sync-full.ts",
+    "pipeline:topics": "tsx scripts/pipeline-topics.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
+    "@vitalets/google-translate-api": "^9.2.1",
     "googleapis": "^171.4.0",
     "next": "16.1.6",
     "pg": "^8.20.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "youtube-transcript": "^1.2.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

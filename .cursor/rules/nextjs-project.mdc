@@ -1,0 +1,40 @@
+---
+description: Специфические правила проекта Выжимка Знаний (Next.js)
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Проект: Выжимка Знаний
+
+Next.js 16 (App Router) + Tailwind CSS + Prisma 7 + PostgreSQL (Neon). 
+Клон функциональности ekstraktznaniy.ru с собственным брендингом.
+
+## Key Commands
+
+```
+npm run dev          # локальная разработка
+npm run build        # сборка
+npx prisma generate  # после изменений schema.prisma
+npx prisma migrate dev --name <name>  # миграция БД
+npx tsx scripts/<name>.ts  # CLI-скрипты
+git add -A && git commit -m "msg" && git push  # деплой на Vercel
+```
+
+## Критичные правила
+
+- Prisma 7: `datasource.url` задаётся в `prisma.config.ts`, не в schema.prisma
+  **Why**: Prisma 7 breaking change. Без этого — ошибка при generate.
+- Используй `@prisma/adapter-pg` + `pg`, не binary engine
+  **Why**: Vercel serverless не поддерживает native binary. Адаптер работает.
+- Каждая страница: `export const dynamic = "force-dynamic"` + `export const runtime = "nodejs"`
+  **Why**: Prisma требует Node.js runtime, не Edge.
+- PowerShell: используй `;` вместо `&&`, `New-Item` вместо `mkdir -p`
+  **Why**: Сетевой диск Windows, PowerShell синтаксис отличается от bash.
+- Git safe.directory: уже настроен для сетевого пути
+
+## Стиль UI
+
+- Тёмная тема: bg-[#0f0f0f], карточки bg-[#181818], hover bg-[#222]
+- Текст: white, secondary #aaaaaa, accent #3ea6ff
+- Шрифт: Roboto (400, 500)
+- Карточки: rounded-xl, shadow-[0_1px_2px_rgba(0,0,0,0.7)]

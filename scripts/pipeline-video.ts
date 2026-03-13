@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { prisma } from "../src/server/db";
 import { cleanTranscript, extractKeySentences, splitIntoSegments } from "../src/server/pipeline/text";
-import { generateWorkbookJson, generateWorkbookMarkdown } from "../src/server/pipeline/workbook";
+import { generateWorkbookData, generateWorkbookJson, generateWorkbookMarkdown } from "../src/server/pipeline/workbook";
 
 function getArg(name: string) {
   const idx = process.argv.findIndex((a) => a === `--${name}`);
@@ -17,7 +17,7 @@ async function main() {
 
   const video = await prisma.video.findUnique({
     where: { youtubeVideoId },
-    include: { transcript: true },
+    include: { transcript: true, channel: true },
   });
   if (!video) throw new Error(`Video not found: ${youtubeVideoId}`);
   if (!video.transcript?.rawText && !video.transcript?.cleanedText) {
@@ -33,7 +33,9 @@ async function main() {
     data: segs.map((text) => ({ videoId: video.id, text })),
   });
 
-  const { summary, markdown } = generateWorkbookMarkdown({ video, cleanedTranscript: cleaned });
+  const workbookData = generateWorkbookData({ video, cleanedTranscript: cleaned });
+  const markdown = generateWorkbookMarkdown(workbookData);
+  const summary = workbookData.summary;
   const bullets = extractKeySentences(cleaned, 10);
   const json = generateWorkbookJson({
     video,
