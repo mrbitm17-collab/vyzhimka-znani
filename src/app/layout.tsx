@@ -102,18 +102,7 @@ export default function RootLayout({
             {children}
           </main>
           <footer className="border-t border-[#272727] px-4 py-6 text-xs text-[#aaaaaa] lg:px-6">
-            <p>
-              «Выжимка знаний». Вдохновлено{" "}
-              <a
-                className="text-[#3ea6ff] hover:underline"
-                href="https://ekstraktznaniy.ru/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                ekstraktznaniy.ru
-              </a>
-              .
-            </p>
+            <p>© 2026 Выжимка знаний. Структурированные знания из YouTube.</p>
           </footer>
         </div>
       </body>

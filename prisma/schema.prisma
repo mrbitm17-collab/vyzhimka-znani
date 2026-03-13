@@ -12,6 +12,7 @@ model Channel {
   title           String
   handle          String?
   description     String?
+  category        String?
   language        String?
   country         String?
   thumbnailUrl    String?
@@ -22,6 +23,7 @@ model Channel {
   tags            ChannelTag[]
 
   @@index([title])
+  @@index([category])
 }
 
 model Video {
